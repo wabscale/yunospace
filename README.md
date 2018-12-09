@@ -20,11 +20,11 @@ After this, it does some operations that Ida was not able to understand. It clea
 
 ![](https://gitlab.com/b1g_J/yunospace/raw/master/img/gdb.png)
 
-So we have nine bytes of shellcode to figure out what the byte after our shellcode is. There are two ways of doing this. We could try to write that byte to stdout, or we could try to guess what it is, and have the program crash if ti our guess is wrong. I went with the latter.
+So we have nine bytes of shellcode to figure out what the byte after our shellcode is. There are two ways of doing this. We could try to write that byte to stdout, or we could try to guess what it is and have the program crash if our guess is wrong. I went with the latter.
 
 ### Solution
 
-So we have nine bytes of shellcode, the address of the page we are currently in in `rip`, and the empty page in `rsp`. The biggest problem to overcome is figuring out how to get the value of `rip` into another register in as few bytes as possible. A fun trick is to just do a syscall, which will sometimes leave values in other registers. It just so happens that if we start our shellcode with a syscall, then the value `rip` gets copied into `rcx`. This only costs two bytes! Then we can use this value in `rcx` to compare our guessed byte value with the byte value from the flag. Then jmp back two if that is true. That will create an infinite loop if the character you guessed is correct, and will crash if you guessed wrong. With this we can slowly, but surely brute force out all the characters of the flag!
+So we have nine bytes of shellcode, the address of the page we are currently in in `rip`, and the empty page in `rsp`. The biggest problem to overcome is figuring out how to get the value of `rip` into another register in as few bytes as possible. A fun trick is to just do a syscall. We don't actually care what that syscall does, as long as the program does not crash. Syscalls usually shift the registers around a bit, and it only costs us two bytes. It just so happens that if we start our shellcode with a syscall, then the value `rip` gets copied into `rcx`. This only costs two bytes! Then we can use this value in `rcx` to compare our guessed byte value with the byte value from the flag. Then `jmp` back two if that is true. That will create an infinite loop if the character you guessed is correct, and will crash if our guess is wrong. With this we can slowly, but surely brute force out all the characters of the flag!
 
 This was the shellcode I ended up using:
 
@@ -43,8 +43,8 @@ from string import printable
 
 '''
 syscall;
-cmp byte ptr [rcx + 7], 0xff
-jz $-2
+cmp byte ptr [rcx + 7], 0xff;
+jz $-2;
 '''
 
 context.log_level='warn'
